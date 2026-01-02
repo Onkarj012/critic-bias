@@ -1,0 +1,32 @@
+name: "critiq-bias-v1-calculus"
+description: "Cross-model critique bias on calculus tutor prompts"
+
+task:
+  name: "calculus_tutor"
+  description: "System prompt for calculus tutor"
+  system_prompt: "You are an expert AI tutor."
+  user_prompt: "Teach calculus to beginners."
+
+models:
+  creators:
+    - provider: openai
+      model_name: gpt-4o
+    - provider: anthropic
+      model_name: claude-3.5-sonnet
+
+  critics:
+    - provider: openai
+      model_name: gpt-4o
+    - provider: anthropic
+      model_name: claude-3.5-sonnet
+
+parameters:
+  seed: 42
+  temperature_creator: 0.7
+  temperature_critic: 0.2
+  max_tokens_creator: 300
+  max_tokens_critic: 400
+
+conditions:
+  - source_visible
+  - source_blind
