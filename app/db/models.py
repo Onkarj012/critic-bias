@@ -65,14 +65,20 @@ class Prompt(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
 
     run_id = Column(UUID(as_uuid=True), ForeignKey("runs.id"), nullable=False)
-    task_id = Column(UUID(as_uuid=True), ForeignKey("tasks.id"), nullable=False)
+    task_id = Column(UUID(as_uuid=True), ForeignKey("tasks.id"), nullable=True)
 
-    creator_provider = Column(String, nullable=False)   # openai, anthropic
-    creator_model = Column(String, nullable=False)      # gpt-4o, claude-3.5-sonnet
+    creator_provider = Column(String, nullable=False)   # openai, anthropic, or "dataset"
+    creator_model = Column(String, nullable=False)      # gpt-4o, claude-3.5-sonnet, or dataset source
     creator_version = Column(String, nullable=True)
 
     content = Column(Text, nullable=False)
     token_count = Column(Integer, nullable=True)
+    
+    # V2 Fields
+    source_type = Column(String, nullable=True)         # "generated" or "dataset"
+    dataset_name = Column(String, nullable=True)
+    prompt_category = Column(String, nullable=True)
+    ground_truth_score = Column(Float, nullable=True)
 
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
 
@@ -106,6 +112,12 @@ class Critique(Base):
     tone = Column(String, nullable=True)  # polite | neutral | brutal
 
     raw_text = Column(Text, nullable=False)
+    
+    # V2 Fields
+    visibility_condition = Column(String, nullable=True)  # visible | blind | misattributed
+    claimed_source = Column(String, nullable=True)        # For misattribution
+    replication_id = Column(Integer, nullable=True)
+    seed_used = Column(Integer, nullable=True)
 
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
 

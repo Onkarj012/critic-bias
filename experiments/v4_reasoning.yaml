@@ -1,11 +1,11 @@
-name: "critiq-bias-v1-calculus"
-description: "Cross-model critique bias on calculus tutor prompts"
+name: "critiq-bias-v4-reasoning"
+description: "Cross-model critique bias on logical reasoning prompts"
 
 task:
-  name: "calculus_tutor"
-  description: "System prompt for calculus tutor"
-  system_prompt: "You are an expert AI tutor specializing in mathematics."
-  user_prompt: "Create a lesson plan for teaching calculus derivatives to beginners. Include key concepts, examples, and practice problems."
+  name: "logical_reasoner"
+  description: "System prompt for logical reasoning assistant"
+  system_prompt: "You are an expert in logic, critical thinking, and problem-solving."
+  user_prompt: "Explain the logical fallacy of 'false dichotomy' with 3 real-world examples and how to avoid it in arguments."
 
 models:
   creators:
@@ -26,7 +26,7 @@ models:
 
 parameters:
   seed: 42
-  temperature_creator: 0.7
+  temperature_creator: 0.5
   temperature_critic: 0.2
   max_tokens_creator: 1000
   max_tokens_critic: 500

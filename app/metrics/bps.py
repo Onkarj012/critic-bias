@@ -18,7 +18,10 @@ class BiasPersistenceScore(BaseMetric):
         buckets = defaultdict(dict)
         for r in rows:
             key = r.target_model
-            buckets[key][r.metadata.get("condition")] = r.value
+            # Use meta_data (the actual column name) instead of metadata
+            condition = r.meta_data.get("condition") if r.meta_data else None
+            if condition:
+                buckets[key][condition] = r.value
 
         results = []
         for key, vals in buckets.items():

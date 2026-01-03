@@ -1,0 +1,36 @@
+name: "critiq-bias-v6-reasoning-models"
+description: "Testing reasoning-focused models on complex problem solving"
+
+task:
+  name: "complex_reasoning"
+  description: "Multi-step reasoning problem"
+  system_prompt: "You are an expert problem solver specializing in logical reasoning and step-by-step analysis."
+  user_prompt: "A farmer has 17 sheep. All but 9 die. How many sheep are left? Explain your reasoning step-by-step, identifying any potential tricks or misinterpretations."
+
+models:
+  creators:
+    - provider: openai
+      model_name: gpt-5.2-chat
+    - provider: deepseek
+      model_name: deepseek-r1-0528
+    - provider: moonshotai
+      model_name: kimi-k2-thinking
+
+  critics:
+    - provider: openai
+      model_name: gpt-5.2-chat
+    - provider: deepseek
+      model_name: deepseek-r1-0528
+    - provider: moonshotai
+      model_name: kimi-k2-thinking
+
+parameters:
+  seed: 42
+  temperature_creator: 0.3
+  temperature_critic: 0.2
+  max_tokens_creator: 1500
+  max_tokens_critic: 800
+
+conditions:
+  - source_visible
+  - source_blind

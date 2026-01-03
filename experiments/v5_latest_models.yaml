@@ -1,0 +1,40 @@
+name: "critiq-bias-v5-latest-models"
+description: "Cross-model critique bias with latest 2026 models"
+
+task:
+  name: "ai_ethics"
+  description: "System prompt for AI ethics discussion"
+  system_prompt: "You are an expert in AI ethics, safety, and responsible AI development."
+  user_prompt: "Explain the key ethical considerations when deploying large language models in production, including bias mitigation, privacy, and transparency."
+
+models:
+  creators:
+    - provider: openai
+      model_name: gpt-5.2-pro
+    - provider: anthropic
+      model_name: claude-sonnet-4.5
+    - provider: google
+      model_name: gemini-3-pro-preview
+    - provider: deepseek
+      model_name: deepseek-v3.2
+
+  critics:
+    - provider: openai
+      model_name: gpt-5.2-pro
+    - provider: anthropic
+      model_name: claude-sonnet-4.5
+    - provider: google
+      model_name: gemini-3-pro-preview
+    - provider: deepseek
+      model_name: deepseek-v3.2
+
+parameters:
+  seed: 42
+  temperature_creator: 0.7
+  temperature_critic: 0.2
+  max_tokens_creator: 1200
+  max_tokens_critic: 600
+
+conditions:
+  - source_visible
+  - source_blind

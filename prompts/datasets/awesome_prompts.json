@@ -1,0 +1,147 @@
+{
+  "name": "awesome_prompts",
+  "description": "Curated prompts from various sources for prompt critique benchmarking",
+  "version": "1.0.0",
+  "prompts": [
+    {
+      "id": "coding_001",
+      "category": "coding",
+      "content": "Write a Python function that takes a list of integers and returns the longest increasing subsequence. Include type hints, docstring, and handle edge cases like empty lists.",
+      "ground_truth_score": 8.5,
+      "metadata": {"difficulty": "medium", "language": "python"}
+    },
+    {
+      "id": "coding_002", 
+      "category": "coding",
+      "content": "Create a REST API endpoint",
+      "ground_truth_score": 2.0,
+      "metadata": {"difficulty": "low", "note": "intentionally vague/bad prompt"}
+    },
+    {
+      "id": "coding_003",
+      "category": "coding",
+      "content": "Implement a thread-safe singleton pattern in Java. Explain why double-checked locking alone is insufficient and demonstrate the volatile keyword usage. Include unit tests.",
+      "ground_truth_score": 9.0,
+      "metadata": {"difficulty": "hard", "language": "java"}
+    },
+    {
+      "id": "creative_001",
+      "category": "creative",
+      "content": "Write a short story (500 words) about a time traveler who accidentally prevents their own birth. Use first-person perspective and include a twist ending.",
+      "ground_truth_score": 8.0,
+      "metadata": {"genre": "sci-fi", "word_limit": 500}
+    },
+    {
+      "id": "creative_002",
+      "category": "creative",
+      "content": "Write something creative",
+      "ground_truth_score": 1.5,
+      "metadata": {"note": "intentionally vague/bad prompt"}
+    },
+    {
+      "id": "creative_003",
+      "category": "creative",
+      "content": "Compose a haiku about the feeling of debugging code at 3am. Follow the 5-7-5 syllable structure strictly.",
+      "ground_truth_score": 7.5,
+      "metadata": {"form": "haiku"}
+    },
+    {
+      "id": "analysis_001",
+      "category": "analysis",
+      "content": "Analyze the trade-offs between microservices and monolithic architecture for a startup with 5 developers building an e-commerce platform. Consider: deployment complexity, team coordination, scalability needs, and time-to-market.",
+      "ground_truth_score": 9.0,
+      "metadata": {"domain": "software-architecture"}
+    },
+    {
+      "id": "analysis_002",
+      "category": "analysis",
+      "content": "Compare these two things and tell me which is better",
+      "ground_truth_score": 1.0,
+      "metadata": {"note": "intentionally vague/bad prompt - missing what to compare"}
+    },
+    {
+      "id": "analysis_003",
+      "category": "analysis",
+      "content": "Evaluate the environmental impact of electric vehicles vs. hydrogen fuel cell vehicles for urban transportation. Consider: production emissions, operational efficiency, infrastructure requirements, and end-of-life recycling.",
+      "ground_truth_score": 8.5,
+      "metadata": {"domain": "environmental"}
+    },
+    {
+      "id": "reasoning_001",
+      "category": "reasoning",
+      "content": "A bat and ball cost $1.10 together. The bat costs $1.00 more than the ball. How much does the ball cost? Explain your reasoning step by step and identify why the intuitive answer is wrong.",
+      "ground_truth_score": 8.0,
+      "metadata": {"type": "cognitive-reflection"}
+    },
+    {
+      "id": "reasoning_002",
+      "category": "reasoning",
+      "content": "Solve this logic puzzle: Five people (A, B, C, D, E) sit in a row. A is not at either end. B is somewhere to the left of C. D is adjacent to E. E is at an end. List all valid arrangements.",
+      "ground_truth_score": 8.5,
+      "metadata": {"type": "constraint-satisfaction"}
+    },
+    {
+      "id": "reasoning_003",
+      "category": "reasoning",
+      "content": "Think about this problem",
+      "ground_truth_score": 1.0,
+      "metadata": {"note": "intentionally vague/bad prompt"}
+    },
+    {
+      "id": "instruction_001",
+      "category": "instruction",
+      "content": "You are a helpful cooking assistant. When given a dish name, provide: (1) ingredients with quantities for 4 servings, (2) step-by-step instructions, (3) common mistakes to avoid, (4) suggested wine pairings.",
+      "ground_truth_score": 9.0,
+      "metadata": {"type": "system-prompt"}
+    },
+    {
+      "id": "instruction_002",
+      "category": "instruction",
+      "content": "Act as a financial advisor. Given a user's monthly income, expenses, and financial goals, create a personalized budget and savings plan. Always disclaim that you're providing educational information, not licensed financial advice.",
+      "ground_truth_score": 8.5,
+      "metadata": {"type": "system-prompt"}
+    },
+    {
+      "id": "instruction_003",
+      "category": "instruction",
+      "content": "You are an AI. Be helpful.",
+      "ground_truth_score": 2.0,
+      "metadata": {"note": "intentionally vague system prompt"}
+    },
+    {
+      "id": "coding_004",
+      "category": "coding",
+      "content": "Refactor this code to be more maintainable:\n```python\ndef f(x):\n    if x==1: return 1\n    if x==2: return 1  \n    return f(x-1)+f(x-2)\n```\nApply: memoization, type hints, docstring, and meaningful naming.",
+      "ground_truth_score": 8.0,
+      "metadata": {"type": "refactoring"}
+    },
+    {
+      "id": "creative_004",
+      "category": "creative",
+      "content": "Design a magic system for a fantasy world where magic is powered by emotions. Define: (1) the 6 core emotions and their associated powers, (2) the cost/risk of using each, (3) how magicians train their emotional control.",
+      "ground_truth_score": 9.0,
+      "metadata": {"genre": "worldbuilding"}
+    },
+    {
+      "id": "analysis_004",
+      "category": "analysis",
+      "content": "Perform a SWOT analysis for a new AI-powered code review tool entering a market dominated by GitHub Copilot and Amazon CodeWhisperer. Focus on differentiation strategies.",
+      "ground_truth_score": 8.5,
+      "metadata": {"type": "business-analysis"}
+    },
+    {
+      "id": "meta_001",
+      "category": "meta",
+      "content": "Critique this prompt and suggest improvements: 'Write me a story.' Consider: specificity, context, constraints, and desired output format.",
+      "ground_truth_score": 7.5,
+      "metadata": {"type": "prompt-engineering"}
+    },
+    {
+      "id": "meta_002",
+      "category": "meta",
+      "content": "You are given this system prompt for review: 'You are a helpful AI assistant. Answer user questions accurately.' Identify 5 specific improvements that would make this more effective, with examples.",
+      "ground_truth_score": 8.0,
+      "metadata": {"type": "prompt-engineering"}
+    }
+  ]
+}

@@ -1,11 +1,11 @@
-name: "critiq-bias-v1-calculus"
-description: "Cross-model critique bias on calculus tutor prompts"
+name: "critiq-bias-v2-coding"
+description: "Cross-model critique bias on coding assistant prompts"
 
 task:
-  name: "calculus_tutor"
-  description: "System prompt for calculus tutor"
-  system_prompt: "You are an expert AI tutor specializing in mathematics."
-  user_prompt: "Create a lesson plan for teaching calculus derivatives to beginners. Include key concepts, examples, and practice problems."
+  name: "coding_assistant"
+  description: "System prompt for coding assistant"
+  system_prompt: "You are an expert software engineer and coding mentor."
+  user_prompt: "Create a Python tutorial on building a REST API with FastAPI. Include authentication, database integration, and best practices."
 
 models:
   creators:
@@ -28,7 +28,7 @@ parameters:
   seed: 42
   temperature_creator: 0.7
   temperature_critic: 0.2
-  max_tokens_creator: 1000
+  max_tokens_creator: 1500
   max_tokens_critic: 500
 
 conditions:

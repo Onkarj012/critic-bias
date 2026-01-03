@@ -15,11 +15,25 @@ class MockLLMClient(BaseLLMClient):
         seed: int | None = None,
     ) -> LLMResponse:
         joined = " ".join(m["content"] for m in messages)
-        h = hashlib.sha256(joined.encode()).hexdigest()[:16]
-
+        h = int(hashlib.sha256(joined.encode()).hexdigest(), 16)
+        
+        # Deterministic pseudo-random score based on hash
+        score = (h % 100) / 10.0
+        
+        content = f"""
+```json
+{{
+  "score": {score},
+  "strengths": ["Good point {h % 5}", "Valid reasoning"],
+  "weaknesses": ["Could be better {h % 3}"],
+  "suggestions": ["Improve X"],
+  "tone": "neutral"
+}}
+```
+"""
         return {
-            "content": f"MOCK RESPONSE: {h}",
+            "content": content,
             "input_tokens": len(joined.split()),
-            "output_tokens": 16,
+            "output_tokens": 50,
             "model": f"mock-{model}",
         }

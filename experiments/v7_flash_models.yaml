@@ -1,0 +1,36 @@
+name: "critiq-bias-v7-flash-models"
+description: "Testing fast/flash models on quick response tasks"
+
+task:
+  name: "quick_summary"
+  description: "Rapid summarization task"
+  system_prompt: "You are an expert at creating concise, accurate summaries."
+  user_prompt: "Summarize the key benefits and drawbacks of microservices architecture in 3 bullet points each."
+
+models:
+  creators:
+    - provider: openai
+      model_name: gpt-5.1
+    - provider: google
+      model_name: gemini-3-flash-preview
+    - provider: anthropic
+      model_name: claude-sonnet-4.5
+
+  critics:
+    - provider: openai
+      model_name: gpt-5.1
+    - provider: google
+      model_name: gemini-3-flash-preview
+    - provider: anthropic
+      model_name: claude-sonnet-4.5
+
+parameters:
+  seed: 42
+  temperature_creator: 0.5
+  temperature_critic: 0.2
+  max_tokens_creator: 800
+  max_tokens_critic: 400
+
+conditions:
+  - source_visible
+  - source_blind

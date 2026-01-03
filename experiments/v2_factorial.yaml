@@ -1,0 +1,75 @@
+# V2.0 Factorial Experiment Schema
+# This replaces the ad-hoc V1-V7 versioning with proper experimental design
+
+version: "2.0"
+name: "critiq-bias-factorial-v1"
+description: "Factorial experiment for brand bias isolation with statistical rigor"
+
+# Source of prompts - uses curated datasets, NOT model generation
+prompts:
+  source: dataset # Options: dataset, file, inline
+  dataset_name: awesome_prompts
+  sample_size: 10 # Number of prompts to sample per category
+  categories: # Optional filter
+    - coding
+    - creative
+    - analysis
+    - reasoning
+
+# Factorial experimental design
+design:
+  type: factorial
+
+  factors:
+    # What the critic sees about the source
+    source_visibility:
+      levels:
+        - visible # "This prompt was created by OpenAI GPT-4o"
+        - blind # "The source of this prompt is unknown"
+        - misattributed # "This prompt was created by [wrong model]"
+      description: "Controls what the critic knows about the prompt source"
+
+    # For misattribution condition: what source to claim
+    # Crossed with source_visibility=misattributed only
+    claimed_source:
+      levels:
+        - openai/gpt-4o
+        - anthropic/claude-3.5-sonnet
+        - google/gemini-2.0-flash
+        - human # Claim it's human-written
+      description: "The source attribution shown to the critic"
+      applies_when: "source_visibility == misattributed"
+
+# Models acting as critics
+models:
+  critics:
+    - provider: openai
+      model_name: gpt-4o
+    - provider: anthropic
+      model_name: claude-3.5-sonnet
+    - provider: google
+      model_name: gemini-2.0-flash
+
+# Statistical parameters for rigor
+statistics:
+  replications: 5 # Run each condition 5 times
+  seeds: # Seeds for each replication
+    - 42
+    - 123
+    - 456
+    - 789
+    - 1011
+  alpha: 0.05 # Significance level
+  power_target: 0.80 # Minimum statistical power
+
+# Model parameters
+parameters:
+  temperature_critic: 0.2 # Low temp for consistency
+  max_tokens_critic: 800
+
+# Output configuration
+output:
+  confidence_intervals: true # Bootstrap 95% CIs
+  effect_sizes: true # Cohen's d
+  pairwise_tests: true # All pairwise comparisons
+  anova: true # Main effects and interactions

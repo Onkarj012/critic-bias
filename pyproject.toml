@@ -1,10 +1,11 @@
 [project]
 name = "critic-bias"
 version = "0.1.0"
-description = "Add your description here"
+description = "CRITIQ-BIAS: Cross-model critique bias benchmarking system"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    # Core
     "asyncpg>=0.31.0",
     "fastapi>=0.128.0",
     "greenlet>=3.3.0",
@@ -15,4 +16,21 @@ dependencies = [
     "pyyaml>=6.0.3",
     "sqlalchemy>=2.0.45",
     "uvicorn>=0.40.0",
+    # Analysis & Visualization
+    "numpy>=1.26.0",
+    "pandas>=2.0.0",
+    "matplotlib>=3.7.0",
+    "seaborn>=0.13.0",
+    # Statistical testing (v2.0)
+    "scipy>=1.11.0",
+    # Dashboard
+    "dash>=2.14.0",
+    "plotly>=5.18.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "ruff>=0.1.0",
 ]
