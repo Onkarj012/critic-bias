@@ -7,6 +7,7 @@ This directory contains curated prompt datasets for the CRITIQ-BIAS v2.0 benchma
 | Dataset           | Prompts | Categories                                               | Has Ground Truth |
 | ----------------- | ------- | -------------------------------------------------------- | ---------------- |
 | `awesome_prompts` | 20      | coding, creative, analysis, reasoning, instruction, meta | ✅ Yes           |
+| `sota_prompts`    | 40      | coding, reasoning, agentic, creative, analysis, instruction, safety, meta | ✅ Yes |
 
 ## Format
 

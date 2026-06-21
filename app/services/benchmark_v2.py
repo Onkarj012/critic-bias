@@ -112,14 +112,20 @@ class BenchmarkRunnerV2:
         try:
             # Create Prompt records from dataset items
             db_prompts = []
+            prompt_source = prompts_cfg.get("source", "dataset")
+            dataset_name = prompts_cfg.get("dataset_name", "custom")
             for item in prompt_items:
                 prompt = Prompt(
                     run_id=run_id,
-                    task_id=None,  # V2 prompts don't belong to a specific task record
+                    task_id=None,
                     creator_provider="dataset",
                     creator_model=item.source,
                     content=item.content,
                     token_count=len(item.content.split()),
+                    source_type=prompt_source,
+                    dataset_name=dataset_name,
+                    prompt_category=item.category,
+                    ground_truth_score=item.ground_truth_score,
                 )
                 db.add(prompt)
                 db_prompts.append((prompt, item))

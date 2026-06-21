@@ -185,11 +185,10 @@ class CriticEngine:
             suggestions=parsed["suggestions"],
             tone=parsed.get("tone"),
             raw_text=response["content"],
-            # V2 fields (stored in raw_text JSON if model doesn't support yet)
-            # visibility_condition=visibility,
-            # claimed_source=claimed_source,
-            # replication_id=replication_id,
-            # seed_used=seed,
+            visibility_condition=visibility,
+            claimed_source=claimed_source,
+            replication_id=replication_id,
+            seed_used=seed,
         )
 
         db.add(critique)

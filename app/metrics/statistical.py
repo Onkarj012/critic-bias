@@ -191,7 +191,7 @@ class StatisticalTests:
     def mfi_significant(ci_lower: float, ci_upper: float) -> str:
         """
         Interpret MFI result based on confidence interval.
-        
+
         - If CI excludes 1.0: statistically significant bias
         - If CI > 1.0: favors this creator
         - If CI < 1.0: disfavors this creator
@@ -202,3 +202,60 @@ class StatisticalTests:
             return "significantly_disfavored"
         else:
             return "no_significant_bias"
+
+    @staticmethod
+    def one_way_anova(groups: list[list[float]]) -> StatResult:
+        """
+        One-way ANOVA across multiple groups.
+
+        Returns F-statistic, p-value, and eta-squared effect size.
+        """
+        from scipy import stats
+
+        if len(groups) < 2 or any(len(g) < 2 for g in groups):
+            return StatResult(
+                statistic=0.0, p_value=1.0, ci_lower=0.0, ci_upper=0.0,
+                method="one_way_anova",
+            )
+
+        group_means = [float(np.mean(g)) for g in groups]
+        if len({round(m, 10) for m in group_means}) == 1:
+            return StatResult(
+                statistic=0.0,
+                p_value=1.0,
+                ci_lower=0.0,
+                ci_upper=0.0,
+                effect_size=0.0,
+                significant=False,
+                method="one_way_anova",
+            )
+
+        f_stat, p_value = stats.f_oneway(*groups)
+
+        if np.isnan(f_stat) or np.isnan(p_value):
+            return StatResult(
+                statistic=0.0,
+                p_value=1.0,
+                ci_lower=0.0,
+                ci_upper=0.0,
+                effect_size=0.0,
+                significant=False,
+                method="one_way_anova",
+            )
+
+        # Eta-squared effect size
+        all_values = [v for g in groups for v in g]
+        grand_mean = np.mean(all_values)
+        ss_between = sum(len(g) * (np.mean(g) - grand_mean) ** 2 for g in groups)
+        ss_total = sum((v - grand_mean) ** 2 for v in all_values)
+        eta_squared = ss_between / ss_total if ss_total > 0 else 0.0
+
+        return StatResult(
+            statistic=float(f_stat),
+            p_value=float(p_value),
+            ci_lower=0.0,
+            ci_upper=0.0,
+            effect_size=float(eta_squared),
+            significant=p_value < 0.05,
+            method="one_way_anova",
+        )

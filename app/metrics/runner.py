@@ -11,6 +11,9 @@ from app.metrics.tone import TonePolarityScore
 from app.metrics.bps import BiasPersistenceScore
 from app.metrics.brutality import BrutalityIndex
 from app.metrics.constructiveness import ConstructivenessRatio
+from app.metrics.ground_truth import GroundTruthCorrelation, ScoringCalibrationError
+from app.metrics.source_bias import SourceBiasIndex
+from app.metrics.anova import ConditionEffectAnalysis
 from app.core.exceptions import MetricError
 
 logger = logging.getLogger(__name__)
@@ -22,6 +25,10 @@ METRIC_CLASSES = [
     BiasPersistenceScore,
     BrutalityIndex,
     ConstructivenessRatio,
+    GroundTruthCorrelation,
+    ScoringCalibrationError,
+    SourceBiasIndex,
+    ConditionEffectAnalysis,
 ]
 
 
