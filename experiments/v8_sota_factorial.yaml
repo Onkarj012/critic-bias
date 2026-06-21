@@ -1,0 +1,73 @@
+# V2.1 SOTA Factorial Experiment
+# Full factorial design with expanded dataset, modern models, and all statistical outputs
+
+version: "2.0"
+name: "critiq-bias-sota-v8"
+description: "SOTA-aligned factorial experiment with 40-prompt dataset, misattribution design, and calibration metrics"
+
+prompts:
+  source: dataset
+  dataset_name: sota_prompts
+  sample_size: 30
+  categories:
+    - coding
+    - reasoning
+    - agentic
+    - creative
+    - analysis
+    - instruction
+    - safety
+    - meta
+
+design:
+  type: factorial
+
+  factors:
+    source_visibility:
+      levels:
+        - visible
+        - blind
+        - misattributed
+      description: "Controls what the critic knows about the prompt source"
+
+    claimed_source:
+      levels:
+        - openai/gpt-4o
+        - anthropic/claude-3.5-sonnet
+        - google/gemini-2.0-flash
+        - human
+      description: "The source attribution shown to the critic"
+      applies_when: "source_visibility == misattributed"
+
+models:
+  critics:
+    - provider: openai
+      model_name: gpt-4o
+    - provider: anthropic
+      model_name: claude-3.5-sonnet
+    - provider: google
+      model_name: gemini-2.0-flash
+
+statistics:
+  replications: 5
+  seeds:
+    - 42
+    - 123
+    - 456
+    - 789
+    - 1011
+  alpha: 0.05
+  power_target: 0.80
+
+parameters:
+  temperature_critic: 0.2
+  max_tokens_critic: 800
+
+output:
+  confidence_intervals: true
+  effect_sizes: true
+  pairwise_tests: true
+  anova: true
+  ground_truth_correlation: true
+  calibration_error: true
+  source_bias_index: true

@@ -25,14 +25,21 @@ class BiasPersistenceScore(BaseMetric):
 
         results = []
         for key, vals in buckets.items():
-            if "source_visible" in vals and "source_blind" in vals:
-                bps = abs(vals["source_visible"] - vals["source_blind"])
+            # Support both v2 (visible/blind) and v1 (source_visible/source_blind) names
+            visible_val = vals.get("visible") or vals.get("source_visible")
+            blind_val = vals.get("blind") or vals.get("source_blind")
+
+            if visible_val is not None and blind_val is not None:
+                bps = abs(visible_val - blind_val)
                 results.append(
                     {
                         "name": self.name,
                         "target_model": key,
                         "value": float(bps),
-                        "metadata": {},
+                        "metadata": {
+                            "visible_mfi": visible_val,
+                            "blind_mfi": blind_val,
+                        },
                     }
                 )
 
