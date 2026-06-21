@@ -212,13 +212,36 @@ class StatisticalTests:
         """
         from scipy import stats
 
-        if len(groups) < 2 or any(len(g) < 1 for g in groups):
+        if len(groups) < 2 or any(len(g) < 2 for g in groups):
             return StatResult(
                 statistic=0.0, p_value=1.0, ci_lower=0.0, ci_upper=0.0,
                 method="one_way_anova",
             )
 
+        group_means = [float(np.mean(g)) for g in groups]
+        if len({round(m, 10) for m in group_means}) == 1:
+            return StatResult(
+                statistic=0.0,
+                p_value=1.0,
+                ci_lower=0.0,
+                ci_upper=0.0,
+                effect_size=0.0,
+                significant=False,
+                method="one_way_anova",
+            )
+
         f_stat, p_value = stats.f_oneway(*groups)
+
+        if np.isnan(f_stat) or np.isnan(p_value):
+            return StatResult(
+                statistic=0.0,
+                p_value=1.0,
+                ci_lower=0.0,
+                ci_upper=0.0,
+                effect_size=0.0,
+                significant=False,
+                method="one_way_anova",
+            )
 
         # Eta-squared effect size
         all_values = [v for g in groups for v in g]

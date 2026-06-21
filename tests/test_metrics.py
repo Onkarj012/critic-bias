@@ -4,6 +4,7 @@ import pytest
 import numpy as np
 
 from app.metrics.statistical import StatisticalTests
+from app.metrics.bps import _resolve_condition_value
 
 
 class TestStatisticalTests:
@@ -39,6 +40,17 @@ class TestStatisticalTests:
         result = StatisticalTests.one_way_anova(groups)
         assert not result.significant
 
+    def test_one_way_anova_constant_groups(self):
+        groups = [[1.0, 1.0, 1.0], [1.0, 1.0, 1.0]]
+        result = StatisticalTests.one_way_anova(groups)
+        assert not result.significant
+        assert result.p_value == 1.0
+
+    def test_one_way_anova_singleton_group_rejected(self):
+        result = StatisticalTests.one_way_anova([[1.0], [2.0, 3.0]])
+        assert not result.significant
+        assert result.p_value == 1.0
+
     def test_mfi_significant_favored(self):
         assert StatisticalTests.mfi_significant(1.1, 1.3) == "significantly_favored"
 
@@ -54,15 +66,22 @@ class TestBPSConditionNames:
 
     def test_visible_blind_keys(self):
         vals = {"visible": 1.2, "blind": 1.0}
-        visible_val = vals.get("visible") or vals.get("source_visible")
-        blind_val = vals.get("blind") or vals.get("source_blind")
+        visible_val = _resolve_condition_value(vals, "visible", "source_visible")
+        blind_val = _resolve_condition_value(vals, "blind", "source_blind")
         assert visible_val == 1.2
         assert blind_val == 1.0
         assert abs(visible_val - blind_val) == pytest.approx(0.2)
 
     def test_legacy_keys(self):
         vals = {"source_visible": 1.15, "source_blind": 1.05}
-        visible_val = vals.get("visible") or vals.get("source_visible")
-        blind_val = vals.get("blind") or vals.get("source_blind")
+        visible_val = _resolve_condition_value(vals, "visible", "source_visible")
+        blind_val = _resolve_condition_value(vals, "blind", "source_blind")
         assert visible_val == 1.15
         assert blind_val == 1.05
+
+    def test_zero_mfi_not_treated_as_missing(self):
+        vals = {"visible": 0.0, "blind": 1.0}
+        visible_val = _resolve_condition_value(vals, "visible", "source_visible")
+        blind_val = _resolve_condition_value(vals, "blind", "source_blind")
+        assert visible_val == 0.0
+        assert blind_val == 1.0

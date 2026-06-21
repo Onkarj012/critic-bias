@@ -7,6 +7,7 @@ a critic is told the wrong source vs. when they evaluate blindly.
 """
 
 from app.metrics.base import BaseMetric
+from app.metrics.ground_truth import _visibility_condition
 from app.metrics.statistical import StatisticalTests
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -15,7 +16,7 @@ from app.db.models import Critique, Prompt
 
 class SourceBiasIndex(BaseMetric):
     """
-    Source Bias Index: mean score difference under misattribution vs. blind.
+    Source Bias Index: mean per-prompt score difference under misattribution vs. blind.
 
     SBI > 0: critic scores higher when misattributed to this source
     SBI < 0: critic scores lower when misattributed to this source
@@ -30,6 +31,7 @@ class SourceBiasIndex(BaseMetric):
                 Critique.critic_model,
                 Critique.score,
                 Critique.visibility_condition,
+                Critique.source_visible,
                 Critique.claimed_source,
                 Prompt.id,
             )
@@ -41,12 +43,11 @@ class SourceBiasIndex(BaseMetric):
         if not rows:
             return []
 
-        # Group: critic -> prompt_id -> condition -> scores
         data: dict[str, dict[str, dict[str, list[float]]]] = {}
         for r in rows:
             critic = f"{r.critic_provider}/{r.critic_model}"
             prompt_id = str(r.id)
-            vis = r.visibility_condition or "blind"
+            vis = _visibility_condition(r.visibility_condition, r.source_visible)
 
             if vis == "misattributed" and r.claimed_source:
                 cond_key = f"misattributed_{r.claimed_source.replace('/', '_')}"
@@ -59,48 +60,57 @@ class SourceBiasIndex(BaseMetric):
 
         results = []
         for critic, prompts in data.items():
-            # Collect blind and misattributed scores per claimed source
-            blind_scores = []
-            misattributed: dict[str, list[float]] = {}
+            deltas_by_source: dict[str, list[float]] = {}
 
-            for prompt_id, conditions in prompts.items():
-                if "blind" in conditions:
-                    blind_scores.extend(conditions["blind"])
+            for conditions in prompts.values():
+                if "blind" not in conditions:
+                    continue
+
+                blind_mean = sum(conditions["blind"]) / len(conditions["blind"])
 
                 for cond_key, scores in conditions.items():
-                    if cond_key.startswith("misattributed_"):
-                        source = cond_key.replace("misattributed_", "")
-                        misattributed.setdefault(source, []).extend(scores)
+                    if not cond_key.startswith("misattributed_"):
+                        continue
+                    source = cond_key.replace("misattributed_", "")
+                    mis_mean = sum(scores) / len(scores)
+                    deltas_by_source.setdefault(source, []).append(mis_mean - blind_mean)
 
-            if not blind_scores:
-                continue
+            for source, deltas in deltas_by_source.items():
+                if not deltas:
+                    continue
 
-            blind_mean = sum(blind_scores) / len(blind_scores)
+                sbi = sum(deltas) / len(deltas)
 
-            for source, mis_scores in misattributed.items():
-                mis_mean = sum(mis_scores) / len(mis_scores)
-                sbi = mis_mean - blind_mean
+                # Per-prompt paired means for effect size
+                mis_means: list[float] = []
+                blind_means: list[float] = []
+                for conditions in prompts.values():
+                    if "blind" not in conditions:
+                        continue
+                    cond_key = f"misattributed_{source}"
+                    if cond_key not in conditions:
+                        continue
+                    blind_means.append(sum(conditions["blind"]) / len(conditions["blind"]))
+                    mis_means.append(sum(conditions[cond_key]) / len(conditions[cond_key]))
 
-                result = {
+                metadata = {
+                    "claimed_source": source,
+                    "n_prompts": len(deltas),
+                    "interpretation": self._interpret(sbi),
+                }
+
+                if len(mis_means) >= 3:
+                    metadata["effect_size"] = StatisticalTests.cohens_d(mis_means, blind_means)
+                    metadata["effect_interpretation"] = StatisticalTests.interpret_effect_size(
+                        metadata["effect_size"]
+                    )
+
+                results.append({
                     "name": self.name,
                     "target_model": f"{critic} -> {source}",
                     "value": float(sbi),
-                    "metadata": {
-                        "claimed_source": source,
-                        "blind_mean": blind_mean,
-                        "misattributed_mean": mis_mean,
-                        "n_blind": len(blind_scores),
-                        "n_misattributed": len(mis_scores),
-                        "interpretation": self._interpret(sbi),
-                    },
-                }
-
-                if len(mis_scores) >= 3 and len(blind_scores) >= 3:
-                    effect_size = StatisticalTests.cohens_d(mis_scores, blind_scores)
-                    result["effect_size"] = effect_size
-                    result["effect_interpretation"] = StatisticalTests.interpret_effect_size(effect_size)
-
-                results.append(result)
+                    "metadata": metadata,
+                })
 
         return results
 

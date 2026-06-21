@@ -4,6 +4,15 @@ from sqlalchemy import select
 from collections import defaultdict
 
 
+def _resolve_condition_value(vals: dict, primary: str, fallback: str) -> float | None:
+    """Resolve a condition value without treating 0.0 as missing."""
+    if primary in vals:
+        return vals[primary]
+    if fallback in vals:
+        return vals[fallback]
+    return None
+
+
 class BiasPersistenceScore(BaseMetric):
     name = "BPS"
 
@@ -18,16 +27,14 @@ class BiasPersistenceScore(BaseMetric):
         buckets = defaultdict(dict)
         for r in rows:
             key = r.target_model
-            # Use meta_data (the actual column name) instead of metadata
             condition = r.meta_data.get("condition") if r.meta_data else None
             if condition:
                 buckets[key][condition] = r.value
 
         results = []
         for key, vals in buckets.items():
-            # Support both v2 (visible/blind) and v1 (source_visible/source_blind) names
-            visible_val = vals.get("visible") or vals.get("source_visible")
-            blind_val = vals.get("blind") or vals.get("source_blind")
+            visible_val = _resolve_condition_value(vals, "visible", "source_visible")
+            blind_val = _resolve_condition_value(vals, "blind", "source_blind")
 
             if visible_val is not None and blind_val is not None:
                 bps = abs(visible_val - blind_val)

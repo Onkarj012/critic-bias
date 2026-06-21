@@ -7,11 +7,16 @@ scoring bias research (2025).
 """
 
 from app.metrics.base import BaseMetric
-from app.metrics.statistical import StatisticalTests
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.models import Critique, Prompt
 import numpy as np
+
+
+def _visibility_condition(visibility_condition: str | None, source_visible: bool) -> str:
+    if visibility_condition:
+        return visibility_condition
+    return "visible" if source_visible else "blind"
 
 
 class GroundTruthCorrelation(BaseMetric):
@@ -43,10 +48,9 @@ class GroundTruthCorrelation(BaseMetric):
         if not rows:
             return []
 
-        # Group by critic and condition
         grouped: dict[str, dict[str, list[tuple[float, float]]]] = {}
         for r in rows:
-            vis = r.visibility_condition or ("visible" if r.source_visible else "blind")
+            vis = _visibility_condition(r.visibility_condition, r.source_visible)
             critic_key = f"{r.critic_provider}/{r.critic_model}"
             grouped.setdefault(critic_key, {}).setdefault(vis, []).append(
                 (float(r.score), float(r.ground_truth_score))
@@ -58,45 +62,49 @@ class GroundTruthCorrelation(BaseMetric):
                 if len(pairs) < 3:
                     continue
 
-                scores = [p[0] for p in pairs]
-                truths = [p[1] for p in pairs]
+                scores = np.array([p[0] for p in pairs])
+                truths = np.array([p[1] for p in pairs])
                 pearson_r = float(np.corrcoef(scores, truths)[0, 1])
 
-                result = {
+                metadata = {
+                    "condition": condition,
+                    "n": len(pairs),
+                    "interpretation": self._interpret(pearson_r),
+                }
+
+                boot_rs = self._bootstrap_correlation(scores, truths, seed=hash((critic, condition)))
+                if boot_rs:
+                    metadata["ci_lower"] = float(np.percentile(boot_rs, 2.5))
+                    metadata["ci_upper"] = float(np.percentile(boot_rs, 97.5))
+
+                results.append({
                     "name": self.name,
                     "target_model": critic,
                     "value": pearson_r,
-                    "metadata": {
-                        "condition": condition,
-                        "n": len(pairs),
-                        "interpretation": self._interpret(pearson_r),
-                    },
-                }
-
-                # Bootstrap CI on correlation
-                _, ci_lower, ci_upper = StatisticalTests.bootstrap_ci(
-                    [pearson_r],  # point estimate already computed
-                    lambda x: x[0],
-                    n_bootstrap=100,
-                )
-                # Re-bootstrap properly
-                rng = np.random.RandomState(42)
-                boot_rs = []
-                scores_arr = np.array(scores)
-                truths_arr = np.array(truths)
-                for _ in range(500):
-                    idx = rng.choice(len(pairs), size=len(pairs), replace=True)
-                    if len(set(idx)) < 2:
-                        continue
-                    boot_rs.append(float(np.corrcoef(scores_arr[idx], truths_arr[idx])[0, 1]))
-
-                if boot_rs:
-                    result["ci_lower"] = float(np.percentile(boot_rs, 2.5))
-                    result["ci_upper"] = float(np.percentile(boot_rs, 97.5))
-
-                results.append(result)
+                    "metadata": metadata,
+                })
 
         return results
+
+    @staticmethod
+    def _bootstrap_correlation(
+        scores: np.ndarray,
+        truths: np.ndarray,
+        *,
+        n_bootstrap: int = 500,
+        seed: int,
+    ) -> list[float]:
+        rng = np.random.RandomState(seed % (2**31))
+        boot_rs = []
+        n = len(scores)
+
+        for _ in range(n_bootstrap):
+            idx = rng.choice(n, size=n, replace=True)
+            if len(set(idx)) < 2:
+                continue
+            boot_rs.append(float(np.corrcoef(scores[idx], truths[idx])[0, 1]))
+
+        return boot_rs
 
     @staticmethod
     def _interpret(r: float) -> str:
@@ -140,7 +148,7 @@ class ScoringCalibrationError(BaseMetric):
 
         grouped: dict[str, dict[str, list[float]]] = {}
         for r in rows:
-            vis = r.visibility_condition or ("visible" if r.source_visible else "blind")
+            vis = _visibility_condition(r.visibility_condition, r.source_visible)
             critic_key = f"{r.critic_provider}/{r.critic_model}"
             error = abs(float(r.score) - float(r.ground_truth_score))
             grouped.setdefault(critic_key, {}).setdefault(vis, []).append(error)

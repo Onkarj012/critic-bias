@@ -16,7 +16,6 @@ import json
 import logging
 import sys
 from pathlib import Path
-from datetime import datetime
 
 import pandas as pd
 
@@ -26,12 +25,6 @@ logging.basicConfig(level=logging.INFO, format="%(message)s")
 logger = logging.getLogger(__name__)
 
 RESULTS_DIR = Path(__file__).parent.parent / "results"
-
-# Metrics where lower is better
-LOWER_IS_BETTER = {"SCE", "BI", "BPS", "SBI"}
-
-# Primary ranking metrics (higher weight in composite score)
-PRIMARY_METRICS = ["GTC", "MFI", "SCE", "BPS", "SBI"]
 
 
 def load_all_results(results_dir: Path) -> list[dict]:
@@ -74,6 +67,35 @@ def load_all_results(results_dir: Path) -> list[dict]:
     return entries
 
 
+def _sort_leaderboard(pivot: pd.DataFrame, metric_filter: str | None) -> pd.DataFrame:
+    """Sort leaderboard by composite fairness or a single filtered metric."""
+    if metric_filter and metric_filter in pivot.columns:
+        if metric_filter == "GTC":
+            return pivot.sort_values(metric_filter, ascending=False)
+        if metric_filter == "SBI":
+            return pivot.assign(_sort_key=pivot[metric_filter].abs()).sort_values("_sort_key").drop(columns="_sort_key")
+        if metric_filter == "MFI":
+            return pivot.assign(_sort_key=(pivot[metric_filter] - 1.0).abs()).sort_values("_sort_key").drop(columns="_sort_key")
+        return pivot.sort_values(metric_filter, ascending=True)
+
+    composite_parts = []
+    if "MFI" in pivot.columns:
+        composite_parts.append((pivot["MFI"] - 1.0).abs())
+    if "BPS" in pivot.columns:
+        composite_parts.append(pivot["BPS"])
+    if "SCE" in pivot.columns:
+        composite_parts.append(pivot["SCE"])
+    if "SBI" in pivot.columns:
+        composite_parts.append(pivot["SBI"].abs())
+
+    if composite_parts:
+        pivot = pivot.copy()
+        pivot["fairness_score"] = sum(composite_parts) / len(composite_parts)
+        return pivot.sort_values("fairness_score")
+
+    return pivot
+
+
 def build_leaderboard(entries: list[dict], metric_filter: str | None = None) -> pd.DataFrame:
     """Build a ranked leaderboard DataFrame from metric entries."""
     if not entries:
@@ -87,12 +109,10 @@ def build_leaderboard(entries: list[dict], metric_filter: str | None = None) -> 
     if df.empty:
         return df
 
-    # Extract critic model from target_model (format: "provider/model -> creator" or just "provider/model")
     df["critic"] = df["target_model"].apply(
         lambda x: x.split(" -> ")[0] if " -> " in str(x) else str(x)
     )
 
-    # Pivot: one row per critic per experiment, columns per metric
     pivot = df.pivot_table(
         index=["experiment", "critic"],
         columns="metric_name",
@@ -100,23 +120,8 @@ def build_leaderboard(entries: list[dict], metric_filter: str | None = None) -> 
         aggfunc="mean",
     ).reset_index()
 
-    # Compute composite fairness score (lower bias = better)
-    # MFI deviation from 1.0, BPS, SCE (inverted), SBI (abs)
-    composite_parts = []
-    if "MFI" in pivot.columns:
-        composite_parts.append((pivot["MFI"] - 1.0).abs())
-    if "BPS" in pivot.columns:
-        composite_parts.append(pivot["BPS"])
-    if "SCE" in pivot.columns:
-        composite_parts.append(pivot["SCE"])
-    if "SBI" in pivot.columns:
-        composite_parts.append(pivot["SBI"].abs())
+    pivot = _sort_leaderboard(pivot, metric_filter)
 
-    if composite_parts:
-        pivot["fairness_score"] = sum(composite_parts) / len(composite_parts)
-        pivot = pivot.sort_values("fairness_score")
-
-    # GTC ranking (higher = better calibration)
     if "GTC" in pivot.columns:
         pivot["calibration_rank"] = pivot["GTC"].rank(ascending=False)
 
@@ -147,9 +152,13 @@ def main():
         logger.info("  No leaderboard data to display.")
         return 0
 
-    # Display summary
+    sort_label = (
+        f"{args.metric} (metric-specific sort)"
+        if args.metric
+        else "fairness_score (lower is better)"
+    )
     logger.info(f"\n{'='*70}")
-    logger.info("LEADERBOARD (ranked by fairness_score — lower is better)")
+    logger.info(f"LEADERBOARD (ranked by {sort_label})")
     logger.info(f"{'='*70}")
 
     display_cols = ["rank", "experiment", "critic"]
@@ -159,7 +168,6 @@ def main():
 
     print(leaderboard[display_cols].to_string(index=False, float_format="%.3f"))
 
-    # Save outputs
     output_csv = Path(args.output) if args.output else RESULTS_DIR / "leaderboard.csv"
     output_csv.parent.mkdir(parents=True, exist_ok=True)
     leaderboard.to_csv(output_csv, index=False)

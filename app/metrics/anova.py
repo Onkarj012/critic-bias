@@ -47,7 +47,10 @@ class ConditionEffectAnalysis(BaseMetric):
 
         results = []
         for critic, conditions in grouped.items():
-            groups = [scores for scores in conditions.values() if len(scores) >= 2]
+            tested_conditions = {
+                name: scores for name, scores in conditions.items() if len(scores) >= 2
+            }
+            groups = list(tested_conditions.values())
             if len(groups) < 2:
                 continue
 
@@ -62,8 +65,8 @@ class ConditionEffectAnalysis(BaseMetric):
                     "effect_size": anova_result.effect_size,
                     "significant": anova_result.significant,
                     "method": anova_result.method,
-                    "conditions": list(conditions.keys()),
-                    "group_sizes": {k: len(v) for k, v in conditions.items()},
+                    "conditions": list(tested_conditions.keys()),
+                    "group_sizes": {k: len(v) for k, v in tested_conditions.items()},
                     "interpretation": (
                         "condition_significant" if anova_result.significant
                         else "no_condition_effect"
